@@ -1,7 +1,110 @@
 <html>
 	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="lib/jquery.min.js"></script>
+		<script src="lib/knockout-min.js"></script>
+		<script src="lib/seedrandom.js"></script>
+		<script src="lib/squares.js"></script>
+		<style>
+			body {
+				font-family: verdana;
+				text-align: center;
+				background-color: lightgray;
+			}
+			.square.wait {
+				cursor: default;
+			}
+		</style>
+		<script>
+			function paTimerModel() {
+				var self = this;
+
+				self.tickInterval = ko.observable(3000);
+				self.actRate = ko.observable(0.30);
+				self.advanceRate = ko.observable(0.10);
+				self.mode = ko.observable(['true', 'pseudo'][0]);
+
+				self.checksum = ko.computed(function() {
+					var rules = {};
+					rules.tickInverval = self.tickInterval();
+					rules.actRate = self.actRate();
+					rules.advanceRate = self.advanceRate();
+					rules.mode = self.mode();
+					var consonants = ['b','c','d','f','g','h','j','k','l','m','n','p','r','s','t','v','w','x','y','z'];
+					var vowels = ['a','e','i','o','u'];
+					var r = consonants[Math.floor(squares.randomFromString(JSON.stringify(rules) + 'a') * consonants.length)]
+						+ vowels[Math.floor(squares.randomFromString(JSON.stringify(rules) + 'b') * vowels.length)]
+						+ consonants[Math.floor(squares.randomFromString(JSON.stringify(rules) + 'c') * consonants.length)];
+					return r;
+				});
+
+				self.body_keydown = function(b, e) {
+					if ([32, 13].indexOf(e.which) >= 0) {
+						self.start_click();
+					} else {
+						return true;
+					}
+				}
+				self.start_click = function() {
+					if (self.ticking()) return;
+					self.ticking(true);
+					self.started(true);
+					self.waiting(true);
+					self.acting(false);
+					self.advancing(false);
+					setTimeout(self.tick, self.tickInterval());
+					return true;
+				}
+				self.started = ko.observable(false);
+				self.ticking = ko.observable(false);
+				self.roll = ko.observable();
+				self.acting = ko.observable(false);
+				self.advancing = ko.observable(false);
+				self.waiting = ko.observable(false);
+				self.waitCount = ko.observable(0);
+				self.ellipses = ko.computed(function() {
+					var r = '';
+					for (var i = 0; i < self.waitCount(); i++) {
+						r += '.';
+					}
+					return r;
+				});
+				self.tick = function() {
+					if (!self.ticking()) return;
+					var rand = Math.random();
+					self.roll(rand);
+					if (rand < self.actRate()) {
+						self.acting(true);
+					} else if (rand >= self.actRate() && rand < self.actRate() + self.advanceRate()) {
+						self.advancing(true);
+					}
+					self.waiting(!self.acting() && !self.advancing());
+
+					if (self.waiting()) {
+						self.waitCount(self.waitCount() + 1);
+					} else {
+						self.ticking(false);
+						self.waitCount(0);
+					}
+					if (self.ticking()) setTimeout(self.tick, self.tickInterval());
+				}
+			}
+			$(document).ready(function() {
+				squares.assignOrderedColors($('.square'), 80, 40);
+				squares.applyCSS();
+				window.model = new paTimerModel();
+				ko.applyBindings(window.model);
+			});
+		</script>
 	</head>
-	<body>
-		<div>Hello World - index.html</div>
+	<body data-bind="event: { keydown: body_keydown }">
+		<div>
+			<div style="text-weight: bold; font-size: 20pt;">Penny Apocalypse Auto-Roller</div>
+			<div data-bind="text: 'Ruleset: ' + checksum()"></div>
+			<span class="square start" data-bind="visible: !started(), event: { click: start_click }">Start</span>
+			<span class="square act" data-bind="visible: acting, event: { click: start_click }">Act!</span>
+			<span class="square advance" data-bind="visible: advancing, event: { click: start_click }">Advance Monster!</span>
+			<span class="square wait" data-bind="visible: waiting">Rolling<span data-bind="text: ellipses"></span></span>
+		</div>
 	</body>
 </html>
