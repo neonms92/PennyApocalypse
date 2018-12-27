@@ -84,8 +84,8 @@
 				var self = this;
 
 				self.tickInterval = ko.observable(3000).extend({ hash: 'tickInterval' });
-				self.actRate = ko.observable(0.30).extend({ hash: 'actRate' });
-				self.advanceRate = ko.observable(0.10).extend({ hash: 'advanceRate' });
+				self.actRate = ko.observable(0.25).extend({ hash: 'actRate' });
+				self.advanceRate = ko.observable(0.125).extend({ hash: 'advanceRate' });
 				self.mode = ko.observable(['true', 'pseudo'][0]).extend({ hash: 'mode' });
 				self.theme = ko.observable('light').extend({ hash: 'theme' });
 
