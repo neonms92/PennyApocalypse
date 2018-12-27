@@ -20,20 +20,22 @@
 				target.hash_defaultValue = target();
 				target.hash_prop = prop;
 				
+				target.hash_take = function() {
+					var value = ko.extenders.hash.get(target.hash_prop);
+					if (typeof(value) == 'undefined')
+						target(target.hash_defaultValue);
+					else
+						target(value);
+				}
+				$(window).on('hashchange', target.hash_take);
+				target.hash_take();
+				
 				target.subscribe(function() {
 					var value = target();
 					if (target.hash_defaultValue == value) {
 						value = null;
 					}
 					ko.extenders.hash.set(target.hash_prop, value);
-				});
-				
-				$(window).on('hashchange', function() {
-					var value = ko.extenders.hash.get(target.hash_prop);
-					if (typeof(value) == 'undefined')
-						target(target.hash_defaultValue);
-					else
-						target(value);
 				});
 				
 				return target;
