@@ -7,15 +7,15 @@
 		<script src="lib/squares.js"></script>
 		<script src="lib/moment.min.js"></script>
 		<style>
-			body {
-				font-family: verdana;
-				text-align: center;
-				background-color: lightgray;
-			}
+			body { text-align: center; }
+			body.light { font-family: verdana; background-color: lightgray; }
+			body.dark { background-color: hsl(228, 46%, 8%); color: hsl(240, 0%, 97%); font-family: lucida console; }
 			.square.wait { cursor: default; }
 			.square.doom { color: red; }
 			.pageTitle { text-weight: bold; font-size: 20pt; }
 			.ruleset { color: gray; }
+			.linkStyle { cursor: pointer; color: blue; text-decoration: underline; font-size: small; }
+			body.dark .linkStyle { color: lightblue; }
 			.history { display: table; margin: 0px auto; }
 			.history > * { display: table-row; }
 			.history > *:nth-child(1) { opacity: 1.0; }
@@ -32,6 +32,8 @@
 			.history .roll { width: 50px; }
 			.history .result { width: 80px; }
 			.history .duration { width: 50px; }
+			
+			.themeToggle { position: absolute; bottom: 20px; right: 20px; }
 		</style>
 		<script>
 			ko.extenders.hash = function(target, prop) {
@@ -85,6 +87,7 @@
 				self.actRate = ko.observable(0.30).extend({ hash: 'actRate' });
 				self.advanceRate = ko.observable(0.10).extend({ hash: 'advanceRate' });
 				self.mode = ko.observable(['true', 'pseudo'][0]).extend({ hash: 'mode' });
+				self.theme = ko.observable('light').extend({ hash: 'theme' });
 
 				self.checksum = ko.computed(function() {
 					var rules = {};
@@ -99,6 +102,11 @@
 						+ consonants[Math.floor(squares.randomFromString(JSON.stringify(rules) + 'c') * consonants.length)];
 					return r;
 				});
+				
+				self.themeToggle_click = function() {
+					if(self.theme() == 'light') self.theme('dark');
+					else self.theme('light');
+				}
 
 				self.body_keydown = function(b, e) {
 					if ([32, 13].indexOf(e.which) >= 0) {
@@ -187,7 +195,7 @@
 			});
 		</script>
 	</head>
-	<body data-bind="event: { keydown: body_keydown }">
+	<body data-bind="event: { keydown: body_keydown }, css: theme">
 		<div class="header">
 			<div class="pageTitle">Penny Apocalypse Auto-Roller</div>
 			<div class="ruleset" data-bind="text: 'Ruleset: ' + checksum()"></div>
@@ -208,5 +216,7 @@
 			</div>
 			<!-- /ko -->
 		</div>
+		<span class="clearHistory linkStyle" data-bind="visible: history().length > 0, event: { click: clearHistory_click }">Clear</span>
+		<span class="themeToggle linkStyle" data-bind="text: theme() == 'light' ? 'Dark Theme' : 'Light Theme', event: { click: themeToggle_click }"></span>
 	</body>
 </html>
