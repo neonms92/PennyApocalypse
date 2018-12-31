@@ -33,7 +33,7 @@
 			.history .result { width: 80px; }
 			.history .duration { width: 50px; }
 			
-			.themeToggle { position: absolute; bottom: 20px; right: 20px; }
+			.bottomLinks { position: absolute; bottom: 20px; right: 20px; }
 		</style>
 		<script>
 			ko.extenders.hash = function(target, prop) {
@@ -180,6 +180,15 @@
 				self.ticking.subscribe(self.autoStart_go);
 				self.autoStart_go();
 				
+				self.shareLink_focus = ko.observable(false);
+				self.shareLink_text = ko.observable('');
+				self.share_click = function() {
+					var shareLink_input = $('input.shareLink');
+					shareLink_input.val(window.location);
+					shareLink_input.select();
+					document.execCommand('copy');
+				}
+				
 				self.history = ko.observableArray([]);
 				self.lastRoll = ko.observable();
 				self.clearHistory_click = function() {
@@ -227,6 +236,10 @@
 			<!-- /ko -->
 		</div>
 		<span class="clearHistory linkStyle" data-bind="visible: history().length > 0, event: { click: clearHistory_click }">Clear</span>
-		<span class="themeToggle linkStyle" data-bind="text: theme() == 'light' ? 'Dark Theme' : 'Light Theme', event: { click: themeToggle_click }"></span>
+		<div class="bottomLinks">
+			<span class="themeToggle linkStyle" data-bind="text: theme() == 'light' ? 'Dark Theme' : 'Light Theme', event: { click: themeToggle_click }"></span>
+			<span class="shareLink linkStyle" data-bind="event: { click: share_click }">Copy Share Link</span>
+			<input class="shareLink" type="text" style="position: absolute; left: -1000; top: -100px; width: 10px; height: 10px;" data-bind="focus: shareLink_focus, text: shareLink_text" />
+		</div>
 	</body>
 </html>
