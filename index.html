@@ -88,6 +88,7 @@
 				self.advanceRate = ko.observable(0.125).extend({ hash: 'advanceRate' });
 				self.mode = ko.observable(['true', 'pseudo'][0]).extend({ hash: 'mode' });
 				self.theme = ko.observable('light').extend({ hash: 'theme' });
+				self.autoStart = ko.observable(0).extend({ hash: 'autoStart' });
 
 				self.checksum = ko.computed(function() {
 					var rules = {};
@@ -95,6 +96,7 @@
 					rules.actRate = self.actRate();
 					rules.advanceRate = self.advanceRate();
 					rules.mode = self.mode();
+					rules.autoStart = self.autoStart();
 					var consonants = ['b'/*,'c'*/,'d','f','g'/*,'h'*/,'j','k','l','m','n','p','r','s','t','v','w'/*,'x'*/,'y','z'];
 					var vowels = ['a','e','i','o','u'];
 					var r = consonants[Math.floor(squares.randomFromString(JSON.stringify(rules) + 'a') * consonants.length)]
@@ -169,6 +171,14 @@
 					else if (roll >= self.actRate() && roll < self.actRate() + self.advanceRate()) return 2;
 					else return 0;
 				}
+				
+				self.autoStart_go = function() {
+					if (self.autoStart()) {
+						setTimeout(self.start_click, self.autoStart());
+					}
+				}
+				self.ticking.subscribe(self.autoStart_go);
+				self.autoStart_go();
 				
 				self.history = ko.observableArray([]);
 				self.lastRoll = ko.observable();
