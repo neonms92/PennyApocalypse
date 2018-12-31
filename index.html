@@ -95,7 +95,7 @@
 					rules.actRate = self.actRate();
 					rules.advanceRate = self.advanceRate();
 					rules.mode = self.mode();
-					var consonants = ['b','c','d','f','g'/*,'h'*/,'j','k','l','m','n','p','r','s','t','v','w','x','y','z'];
+					var consonants = ['b'/*,'c'*/,'d','f','g'/*,'h'*/,'j','k','l','m','n','p','r','s','t','v','w'/*,'x'*/,'y','z'];
 					var vowels = ['a','e','i','o','u'];
 					var r = consonants[Math.floor(squares.randomFromString(JSON.stringify(rules) + 'a') * consonants.length)]
 						+ vowels[Math.floor(squares.randomFromString(JSON.stringify(rules) + 'b') * vowels.length)]
