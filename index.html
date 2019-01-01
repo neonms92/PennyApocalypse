@@ -37,7 +37,6 @@
 			.history > * > * { display: table-cell; padding: 5px 2px; }
 			.history .roll { width: 50px; }
 			.history .result { width: 80px; }
-			.history .duration { width: 50px; }
 			
 			.bottomLinks { position: absolute; bottom: 20px; right: 20px; }
 			.bottomLinks > * { white-space: nowrap; }
@@ -131,9 +130,11 @@
 					self.waiting(true);
 					self.acting(false);
 					self.advancing(false);
+					self.rollStart(moment());
 					setTimeout(self.tick, self.tickInterval());
 					return true;
 				}
+				self.rollStart = ko.observable(null);
 				self.started = ko.observable(false);
 				self.ticking = ko.observable(false);
 				self.roll = ko.observable();
@@ -152,6 +153,7 @@
 					if (!self.ticking()) return;
 					var rand = Math.random();
 					self.roll(rand);
+					self.rollStart(null);
 					var result = self.getResult(rand);
 					if (result == 1) {
 						self.acting(true);
@@ -166,7 +168,10 @@
 						self.ticking(false);
 						self.waitCount(0);
 					}
-					if (self.ticking()) setTimeout(self.tick, self.tickInterval());
+					if (self.ticking()) {
+						self.rollStart(moment());
+						setTimeout(self.tick, self.tickInterval());
+					}
 				}
 				self.results = {
 					0: 'Wait',
@@ -207,33 +212,53 @@
 						roll: self.roll()
 						,result: self.getResult(self.roll())
 						,time: moment()
-						,duration: self.lastRoll() ? moment().diff(self.lastRoll().time, 'ms') : null
+						,start: self.rollStart()
 					}
 					self.history.push(o);
 					self.lastRoll(o);
 				});
 				
+				self.calcTime = ko.observable(0);
 				self.stats = ko.computed(function() {
+					var calcStart = moment();
 					var history = self.history();
 					var rollCount = 0;
 					var actionCount = 0;
 					var doomCount = 0;
+					var longestTimeWaitingStart = null;
+					var longestTimeWaiting = 0;
+					var totalActionTime = 0;
+					var totalDoomTime = 0;
+					var waitTimes = [];
 					for (var i = 0; i < history.length; i++) {
 						var roll = history[i];
 						rollCount++;
 						if (roll.result == 1) actionCount++;
 						if (roll.result == 2) doomCount++;
+						if (longestTimeWaitingStart == null) {
+							longestTimeWaitingStart = roll.start;
+						} else if (roll.result == 1) {
+							var thisWait = roll.start.diff(longestTimeWaitingStart, 'ms');
+							waitTimes.push(thisWait);
+							longestTimeWaiting = Math.max(longestTimeWaiting, thisWait);
+							longestTimeWaitingStart = roll.start;
+						}
 					}
 					function calcPercentage(a,b) { return (b ? ('\t%' + (a * 100 / b).toFixed(0)) : '') }
-					return {
+					var r = {
 						'Roll count': rollCount
 						,'Action count': actionCount + calcPercentage(actionCount, rollCount)
 						,'Doom count': doomCount + calcPercentage(doomCount, rollCount)
-						,'Longest time waiting': ''
-						,'Average time acting': ''
-						,'Average time dooming': ''
-						,'Average time waiting': ''
+						,'Max time waiting': longestTimeWaiting > 0 ? (longestTimeWaiting / 1000.0).toFixed(2) : ''
+						,'Avg time waiting': waitTimes.length > 0 ? ((waitTimes.reduce(function(p,c,i,a) { return p + c; }, 0) / waitTimes.length) / 1000.0).toFixed(2) : ''
+						,'Max time acting': ''
+						,'Avg time acting': ''
+						,'Max time dooming': ''
+						,'Avg time dooming': ''
 					};
+					self.calcTime(self.calcTime() + moment().diff(calcStart, 'ms'));
+					r['Computation Time'] = (self.calcTime() / 1000.0).toFixed(2);
+					return r;
 				});
 			}
 			$(document).ready(function() {
@@ -270,7 +295,6 @@
 			<div class="entry">
 				<div class="roll" data-bind="text: (1 - roll).toFixed(2)"></div>
 				<div class="result" data-bind="text: $parent.results[result]"></div>
-				<div class="duration" data-bind="text: duration ? (duration / 1000.0).toFixed(2) : ''"></div>
 			</div>
 			<!-- /ko -->
 		</div>
