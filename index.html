@@ -17,6 +17,11 @@
 			.ruleset { color: gray; }
 			.linkStyle { cursor: pointer; color: blue; text-decoration: underline; font-size: small; }
 			body.dark .linkStyle { color: lightblue; }
+			
+			.stats { display: table; margin: 0px auto; font-size: 8pt; text-align: right; margin-bottom: 20px; }
+			.stats > * { display: table-row; }
+			.stats > * > * { display: table-cell; padding: 2px 2px; }
+			
 			.history { display: table; margin: 0px auto; }
 			.history > * { display: table-row; }
 			.history > *:nth-child(1) { opacity: 1.0; }
@@ -35,6 +40,7 @@
 			.history .duration { width: 50px; }
 			
 			.bottomLinks { position: absolute; bottom: 20px; right: 20px; }
+			.bottomLinks > * { white-space: nowrap; }
 		</style>
 		<script>
 			ko.extenders.hash = function(target, prop) {
@@ -198,13 +204,36 @@
 				}
 				self.roll.subscribe(function() {
 					var o = {
-						roll: self.roll(),
-						result: self.getResult(self.roll()),
-						time: moment(),
-						duration: self.lastRoll() ? moment().diff(self.lastRoll().time, 'ms') : null
+						roll: self.roll()
+						,result: self.getResult(self.roll())
+						,time: moment()
+						,duration: self.lastRoll() ? moment().diff(self.lastRoll().time, 'ms') : null
 					}
 					self.history.push(o);
 					self.lastRoll(o);
+				});
+				
+				self.stats = ko.computed(function() {
+					var history = self.history();
+					var rollCount = 0;
+					var actionCount = 0;
+					var doomCount = 0;
+					for (var i = 0; i < history.length; i++) {
+						var roll = history[i];
+						rollCount++;
+						if (roll.result == 1) actionCount++;
+						if (roll.result == 2) doomCount++;
+					}
+					function calcPercentage(a,b) { return (b ? ('\t%' + (a * 100 / b).toFixed(0)) : '') }
+					return {
+						'Roll count': rollCount
+						,'Action count': actionCount + calcPercentage(actionCount, rollCount)
+						,'Doom count': doomCount + calcPercentage(doomCount, rollCount)
+						,'Longest time waiting': ''
+						,'Average time acting': ''
+						,'Average time dooming': ''
+						,'Average time waiting': ''
+					};
 				});
 			}
 			$(document).ready(function() {
@@ -225,6 +254,15 @@
 			<span class="square act" data-bind="visible: acting, event: { click: start_click }">Act!</span>
 			<span class="square doom" data-bind="visible: advancing, event: { click: start_click }">Doom!</span>
 			<span class="square wait" data-bind="visible: waiting">Rolling<span data-bind="text: ellipses"></span></span>
+		</div>
+		<div class="stats">
+			<!-- ko foreach: Object.keys(stats()) -->
+			<div class="stat">
+				<div class="name" data-bind="html: $data + ':'"></div>
+				<div class="value" data-bind="html: $parent.stats()[$data].toString().split('\t')[0]"></div>
+				<div class="value2" data-bind="html: $parent.stats()[$data].toString().split('\t')[1]"></div>
+			</div>
+			<!-- /ko -->
 		</div>
 		<span class="sectionName" data-bind="visible: history().length > 0">History:</span>
 		<div class="history">
